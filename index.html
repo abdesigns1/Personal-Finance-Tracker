@@ -4,14 +4,40 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Personal Finance Tracker</title>
+    <link rel="icon" type="image/x-icon" href="images/FT logo fav.png" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <header>
       <div class="container">
         <div class="header-content">
-          <h1>Personal Finance Tracker</h1>
+          <img
+            src="images/FT logo Main.png"
+            alt="Finance Tracker Logo"
+            class="logo"
+            width="64"
+            height="64"
+            style="width: 150px; height: 64px; object-fit: contain"
+          />
+
+          <div class="currency-selector">
+            <label for="global-currency">Currency:</label>
+            <select id="global-currency">
+              <option value="USD">USD ($)</option>
+              <option value="EUR">EUR (€)</option>
+              <option value="GBP">GBP (£)</option>
+              <option value="JPY">JPY (¥)</option>
+              <option value="CAD">CAD (C$)</option>
+              <option value="AUD">AUD (A$)</option>
+              <option value="INR">INR (₹)</option>
+              <option value="CNY">CNY (¥)</option>
+              <option value="BRL">BRL (R$)</option>
+              <option value="ZAR">ZAR (R)</option>
+              <option value="NGN">NGN (₦)</option>
+            </select>
+          </div>
           <div id="current-date"></div>
         </div>
       </div>
@@ -22,28 +48,27 @@
         <div class="tab active" data-tab="transactions">Transactions</div>
         <div class="tab" data-tab="categories">Categories</div>
         <div class="tab" data-tab="analytics">Analytics</div>
+        <div class="tab" data-tab="settings">Settings</div>
       </div>
 
       <!-- Transactions Tab -->
       <div class="tab-content active" id="transactions-tab">
         <div class="app-container">
           <div class="left-panel">
-            <!-- Summary Card -->
-
             <div class="card">
               <h2 class="card-title">Summary</h2>
               <div class="summary-cards">
                 <div class="summary-card">
                   <h3>Total Income</h3>
-                  <div class="amount income" id="total-income">$0.00</div>
+                  <div class="amount income" id="total-income"></div>
                 </div>
                 <div class="summary-card">
                   <h3>Total Expenses</h3>
-                  <div class="amount expense" id="total-expenses">$0.00</div>
+                  <div class="amount expense" id="total-expenses"></div>
                 </div>
                 <div class="summary-card">
                   <h3>Balance</h3>
-                  <div class="amount" id="balance">$0.00</div>
+                  <div class="amount" id="balance"></div>
                 </div>
               </div>
             </div>
@@ -170,6 +195,51 @@
           <button id="export-csv" class="btn-accent">
             Export Transactions to CSV
           </button>
+        </div>
+      </div>
+
+      <!-- Settings Tab -->
+      <div class="tab-content" id="settings-tab">
+        <div class="card">
+          <h2 class="card-title">Application Settings</h2>
+          <div class="settings-section">
+            <div class="settings-group">
+              <h3>Currency Settings</h3>
+              <div class="form-group">
+                <label for="settings-currency">Default Currency</label>
+                <select id="settings-currency">
+                  <option value="USD">USD ($)</option>
+                  <option value="EUR">EUR (€)</option>
+                  <option value="GBP">GBP (£)</option>
+                  <option value="JPY">JPY (¥)</option>
+                  <option value="CAD">CAD (C$)</option>
+                  <option value="AUD">AUD (A$)</option>
+                  <option value="INR">INR (₹)</option>
+                  <option value="CNY">CNY (¥)</option>
+                  <option value="BRL">BRL (R$)</option>
+                  <option value="ZAR">ZAR (R)</option>
+                  <option value="NGN">NGN (₦)</option>
+                </select>
+              </div>
+              <button id="save-currency" class="btn-secondary">
+                Save Currency Settings
+              </button>
+            </div>
+
+            <div class="settings-group">
+              <h3>Data Management</h3>
+              <button id="clear-all-data" class="btn-accent">
+                Clear All Data
+              </button>
+              <p
+                class="warning-text"
+                style="color: #dc3545; margin-top: 10px; font-size: 0.9rem"
+              >
+                Warning: This will permanently delete all transactions and
+                categories.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </div>

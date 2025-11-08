@@ -1,3 +1,18 @@
+// Currency configuration
+const CURRENCY_FORMATS = {
+  USD: { symbol: "$", code: "USD", locale: "en-US" },
+  EUR: { symbol: "€", code: "EUR", locale: "de-DE" },
+  GBP: { symbol: "£", code: "GBP", locale: "en-GB" },
+  JPY: { symbol: "¥", code: "JPY", locale: "ja-JP" },
+  CAD: { symbol: "C$", code: "CAD", locale: "en-CA" },
+  AUD: { symbol: "A$", code: "AUD", locale: "en-AU" },
+  INR: { symbol: "₹", code: "INR", locale: "en-IN" },
+  CNY: { symbol: "¥", code: "CNY", locale: "zh-CN" },
+  BRL: { symbol: "R$", code: "BRL", locale: "pt-BR" },
+  ZAR: { symbol: "R", code: "ZAR", locale: "en-ZA" },
+  NGN: { symbol: "₦", code: "NGN", locale: "en-NG" },
+};
+
 // Initialize the application when DOM is loaded
 document.addEventListener("DOMContentLoaded", function () {
   // Set current date in header
@@ -32,6 +47,7 @@ class FinanceTracker {
       { id: 8, name: "Utilities", type: "expense" },
       { id: 9, name: "Healthcare", type: "expense" },
     ];
+    this.currency = localStorage.getItem("currency") || "USD";
     this.nextCategoryId = Math.max(...this.categories.map((c) => c.id), 0) + 1;
     this.nextTransactionId =
       Math.max(...this.transactions.map((t) => t.id), 0) + 1;
@@ -39,11 +55,42 @@ class FinanceTracker {
   }
 
   init() {
+    this.setCurrency(this.currency);
     this.renderCategories();
     this.renderTransactions();
     this.updateSummary();
     this.setupEventListeners();
     this.initChart();
+  }
+
+  // Format currency based on selected currency
+  formatCurrency(amount) {
+    const currencyInfo = CURRENCY_FORMATS[this.currency];
+    return new Intl.NumberFormat(currencyInfo.locale, {
+      style: "currency",
+      currency: currencyInfo.code,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount);
+  }
+
+  // Get currency symbol
+  getCurrencySymbol() {
+    return CURRENCY_FORMATS[this.currency].symbol;
+  }
+
+  // Set currency and update UI
+  setCurrency(currencyCode) {
+    this.currency = currencyCode;
+    localStorage.setItem("currency", currencyCode);
+
+    // Update currency selector
+    document.getElementById("global-currency").value = currencyCode;
+    document.getElementById("settings-currency").value = currencyCode;
+
+    // Refresh UI elements that display currency
+    this.updateSummary();
+    this.renderTransactions();
   }
 
   // Save data to localStorage
@@ -138,7 +185,7 @@ class FinanceTracker {
                         <div class="transaction-amount ${transaction.type}">
                             ${
                               transaction.type === "income" ? "+" : "-"
-                            }$${transaction.amount.toFixed(2)}
+                            }${this.formatCurrency(transaction.amount)}
                         </div>
                         <div class="transaction-actions">
                             <button class="delete-transaction" data-id="${
@@ -204,13 +251,12 @@ class FinanceTracker {
 
     const balance = totalIncome - totalExpenses;
 
-    document.getElementById(
-      "total-income"
-    ).textContent = `$${totalIncome.toFixed(2)}`;
-    document.getElementById(
-      "total-expenses"
-    ).textContent = `$${totalExpenses.toFixed(2)}`;
-    document.getElementById("balance").textContent = `$${balance.toFixed(2)}`;
+    document.getElementById("total-income").textContent =
+      this.formatCurrency(totalIncome);
+    document.getElementById("total-expenses").textContent =
+      this.formatCurrency(totalExpenses);
+    document.getElementById("balance").textContent =
+      this.formatCurrency(balance);
 
     // Update balance color
     const balanceElement = document.getElementById("balance");
@@ -308,6 +354,20 @@ class FinanceTracker {
         scales: {
           y: {
             beginAtZero: true,
+            ticks: {
+              callback: (value) => this.formatCurrency(value),
+            },
+          },
+        },
+        plugins: {
+          tooltip: {
+            callbacks: {
+              label: (context) => {
+                return `${context.dataset.label}: ${this.formatCurrency(
+                  context.raw
+                )}`;
+              },
+            },
           },
         },
       },
@@ -369,7 +429,7 @@ class FinanceTracker {
     }
 
     // Create CSV header
-    let csv = "Type,Amount,Date,Category,Notes\n";
+    let csv = "Type,Amount,Currency,Date,Category,Notes\n";
 
     // Add transaction data
     this.transactions.forEach((transaction) => {
@@ -379,8 +439,10 @@ class FinanceTracker {
       const categoryName = category ? category.name : "Unknown";
 
       csv += `"${transaction.type}","${transaction.amount}","${
-        transaction.date
-      }","${categoryName}","${transaction.notes || ""}"\n`;
+        this.currency
+      }","${transaction.date}","${categoryName}","${
+        transaction.notes || ""
+      }"\n`;
     });
 
     // Create and trigger download
@@ -388,11 +450,45 @@ class FinanceTracker {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "finance-transactions.csv";
+    a.download = `finance-transactions-${this.currency}.csv`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+  }
+
+  // Clear all data
+  clearAllData() {
+    if (
+      confirm(
+        "Are you sure you want to delete ALL data? This action cannot be undone."
+      )
+    ) {
+      this.transactions = [];
+      this.categories = [
+        { id: 1, name: "Salary", type: "income" },
+        { id: 2, name: "Freelance", type: "income" },
+        { id: 3, name: "Investment", type: "income" },
+        { id: 4, name: "Gift", type: "income" },
+        { id: 5, name: "Food", type: "expense" },
+        { id: 6, name: "Transportation", type: "expense" },
+        { id: 7, name: "Entertainment", type: "expense" },
+        { id: 8, name: "Utilities", type: "expense" },
+        { id: 9, name: "Healthcare", type: "expense" },
+      ];
+      this.nextCategoryId = 10;
+      this.nextTransactionId = 1;
+
+      this.saveData();
+      this.renderCategories();
+      this.renderTransactions();
+      this.updateSummary();
+      this.updateChart();
+
+      alert(
+        "All data has been cleared. Default categories have been restored."
+      );
+    }
   }
 
   // Set up event listeners
@@ -505,6 +601,25 @@ class FinanceTracker {
     // CSV export
     document.getElementById("export-csv").addEventListener("click", () => {
       this.exportToCSV();
+    });
+
+    // Currency change
+    document
+      .getElementById("global-currency")
+      .addEventListener("change", (e) => {
+        this.setCurrency(e.target.value);
+      });
+
+    // Settings currency change
+    document
+      .getElementById("settings-currency")
+      .addEventListener("change", (e) => {
+        this.setCurrency(e.target.value);
+      });
+
+    // Clear all data
+    document.getElementById("clear-all-data").addEventListener("click", () => {
+      this.clearAllData();
     });
   }
 }
